@@ -1,0 +1,14 @@
+name: Package macOS application
+
+on: push
+
+jobs:
+  package-macos:
+    name: Package macOS application
+    runs-on: macos-latest
+
+    steps:
+      - name: Install to homebrew
+        run: |
+          brew install homebank
+          brew ls -v homebank
