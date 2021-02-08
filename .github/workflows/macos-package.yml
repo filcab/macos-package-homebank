@@ -11,9 +11,10 @@ jobs:
       - name: Install to homebrew
         run: |
           brew install homebank
-          brew ls -v homebank
           
       - name: dump some information
         run: |
+          brew ls -v homebank
           brew --prefix homebank
+          ls $(brew --prefix homebank)
           otool -L $(brew --prefix homebank)/bin/homebank
