@@ -48,7 +48,6 @@ def collect_libs(binary):
         libs = [line.strip().split()[0] for line in lib_lines if brew_prefix in line]
         queued.extend(collected.difference(set(libs)))
         collected.update(libs)
-    print(collected)
 
     return sorted(list(collected))
 
@@ -61,11 +60,11 @@ binary = bindir/os.path.basename(original_binary)
 libs = collect_libs(binary)
 for lib in libs:
     if not Path(lib).is_relative_to(formula_prefix):
+        print(f'copying {lib} to {libdir}')
         shutil.copy2(lib, libdir)
 
 # adjust dylib paths
 subprocess.run(['install_name_tool', '-add_rpath', '@loader_path/../lib', binary])
-print(libs)
 for lib in libs:
     subprocess.run(['install_name_tool', '-change', lib,
                     f"@rpath/{os.path.basename(lib)}", binary])
