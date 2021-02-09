@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+
+from pathlib import Path
+
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+
+parser = argparse.ArgumentParser(prog=sys.argv[0])
+# path to homebank install dir (above bin/homebank)
+parser.add_argument('prefix')
+# destination .app
+parser.add_argument('appdir')
+args = parser.parse_args(sys.argv[1:])
+
+brew_prefix = subprocess.check_output(['brew', '--prefix'],
+                                      encoding='utf-8').strip()
+
+formula_prefix = (
+    os.path.realpath(args.prefix)
+    if os.path.islink(args.prefix)
+    else args.prefix)
+original_binary = Path(formula_prefix)/'bin/notmuch'
+
+appdir = args.appdir
+contents = Path(appdir)/'Contents'
+bindir = contents/'bin'
+libdir = contents/'lib'
+sharedir = contents/'share'
+
+
+def collect_libs(binary):
+    queued = [binary]
+    collected = set()
+    while queued:
+        lib_lines = subprocess.check_output(['otool', '-L', queued.pop()],
+                                            encoding='utf-8').splitlines()[1:]
+        libs = [line.strip().split()[0] for line in lib_lines if brew_prefix in line]
+        queued.extend(collected.difference(set(libs)))
+        collected.update(libs)
+    print(collected)
+
+    return sorted(list(collected))
+
+
+os.makedirs(appdir)
+# copy the full prefix first
+shutil.copytree(formula_prefix, contents, symlinks=True)
+
+binary = bindir/os.path.basename(original_binary)
+libs = collect_libs(binary)
+for lib in libs:
+    if not Path(lib).is_relative_to(formula_prefix):
+        shutil.copy2(lib, libdir)
+
+# adjust dylib paths
+subprocess.run(['install_name_tool', '-add_rpath', '@loader_path/../lib', binary])
+print(libs)
+for lib in libs:
+    subprocess.run(['install_name_tool', '-change', lib,
+                    f"@rpath/{os.path.basename(lib)}", binary])
