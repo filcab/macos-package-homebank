@@ -24,8 +24,8 @@ formula_prefix = subprocess.check_output(
     encoding='utf-8'
     ).strip()
 
-if os.path.islink(args.prefix):
-    formula_prefix = os.path.realpath(args.prefix)
+if os.path.islink(formula_prefix):
+    formula_prefix = os.path.realpath(formula_prefix)
 
 exe_name = args.executable_name
 if not exe_name:
