@@ -6,6 +6,7 @@ import argparse
 import os
 import shutil
 import subprocess
+import stat
 import sys
 
 parser = argparse.ArgumentParser(prog=sys.argv[0])
@@ -58,13 +59,20 @@ shutil.copytree(formula_prefix, contents, symlinks=True)
 
 binary = bindir/os.path.basename(original_binary)
 libs = collect_libs(binary)
+libdir_stat = libdir.stat()
+libdir.chmod(libdir_stat.st_mode | stat.S_IWUSR)
 for lib in libs:
     if not Path(lib).is_relative_to(formula_prefix):
         print(f'copying {lib} to {libdir}')
         shutil.copy2(lib, libdir)
 
+binary_stat = binary.stat()
+binary.chmod(binary_stat | stat.S_IWUSR)
 # adjust dylib paths
 subprocess.run(['install_name_tool', '-add_rpath', '@loader_path/../lib', binary])
 for lib in libs:
     subprocess.run(['install_name_tool', '-change', lib,
                     f"@rpath/{os.path.basename(lib)}", binary])
+
+binary.chmod(binary_stat.st_mode)
+libdir.chmod(libdir_stat.st_mode)
