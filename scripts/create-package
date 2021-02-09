@@ -10,7 +10,8 @@ import sys
 
 parser = argparse.ArgumentParser(prog=sys.argv[0])
 # path to homebank install dir (above bin/homebank)
-parser.add_argument('prefix')
+parser.add_argument('formula')
+parser.add_argument('--executable-name', default=None)
 # destination .app
 parser.add_argument('appdir')
 args = parser.parse_args(sys.argv[1:])
@@ -18,11 +19,18 @@ args = parser.parse_args(sys.argv[1:])
 brew_prefix = subprocess.check_output(['brew', '--prefix'],
                                       encoding='utf-8').strip()
 
-formula_prefix = (
-    os.path.realpath(args.prefix)
-    if os.path.islink(args.prefix)
-    else args.prefix)
-original_binary = Path(formula_prefix)/'bin/notmuch'
+formula_prefix = subprocess.check_output(
+    ['brew', '--prefix', args.formula],
+    encoding='utf-8'
+    ).strip()
+
+if os.path.islink(args.prefix):
+    formula_prefix = os.path.realpath(args.prefix)
+
+exe_name = args.executable_name
+if not exe_name:
+    exe_name = args.formula
+original_binary = Path(formula_prefix)/f'bin/{exe_name}'
 
 appdir = args.appdir
 contents = Path(appdir)/'Contents'
