@@ -59,6 +59,8 @@ shutil.copytree(formula_prefix, contents, symlinks=True)
 
 binary = bindir/os.path.basename(original_binary)
 libs = collect_libs(binary)
+# create the directory if it didn't exist
+os.makedirs(libdir, exist_ok=True)
 libdir_stat = libdir.stat()
 libdir.chmod(libdir_stat.st_mode | stat.S_IWUSR)
 for lib in libs:
@@ -67,7 +69,7 @@ for lib in libs:
         shutil.copy2(lib, libdir)
 
 binary_stat = binary.stat()
-binary.chmod(binary_stat | stat.S_IWUSR)
+binary.chmod(binary_stat.st_mode | stat.S_IWUSR)
 # adjust dylib paths
 subprocess.run(['install_name_tool', '-add_rpath', '@loader_path/../lib', binary])
 for lib in libs:
