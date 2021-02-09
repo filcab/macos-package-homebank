@@ -26,7 +26,7 @@ jobs:
 
       - name: Package
         run: |
-          ./packaging/scripts/create-package $(brew --prefix homebank) HomeBank.app
+          ./packaging/scripts/create-package homebank HomeBank.app
           zip -r Homebank Homebank.app
          
       - name: Upload package
