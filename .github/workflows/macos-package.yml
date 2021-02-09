@@ -11,10 +11,26 @@ jobs:
       - name: Install to homebrew
         run: |
           brew install homebank
-          
+
       - name: dump some information
         run: |
           brew ls -v homebank
           brew --prefix homebank
           ls $(brew --prefix homebank)
           otool -L $(brew --prefix homebank)/bin/homebank
+
+      - name: Checkout scripts
+        uses: actions/checkout@v2
+        with:
+          path: packaging
+
+      - name: Package
+        run: |
+          ./packaging/create-package $(brew --prefix homebank) HomeBank.app
+          zip -r Homebank Homebank.app
+         
+      - name: Upload package
+        uses: actions/upload-artifact@v2
+        with:
+          name: macOS zip
+          path: Homebank.zip
