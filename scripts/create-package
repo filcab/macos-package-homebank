@@ -49,14 +49,21 @@ print(f'formula: {args.formula}')
 print(f'formula prefix: {formula_prefix}')
 
 
+def dependent_brew_libs(binary):
+    lib_lines = subprocess.check_output(['otool', '-L', binary],
+                                        encoding='utf-8').splitlines()[1:]
+    return map(
+        os.path.realpath,
+        [line.strip().split()[0] for line in lib_lines if brew_prefix in line])
+
+
 def collect_libs(binary):
     queued = [binary]
     collected = set()
     while queued:
         binary = queued.pop()
-        lib_lines = subprocess.check_output(['otool', '-L', binary],
-                                            encoding='utf-8').splitlines()[1:]
-        libs = [line.strip().split()[0] for line in lib_lines if brew_prefix in line]
+        libs = dependent_brew_libs(binary)
+        print(list(libs))
         queued.extend(set(libs).difference(collected))
         collected.update(libs)
 
@@ -77,9 +84,11 @@ os.makedirs(libdir, exist_ok=True)
 libdir_stat = libdir.stat()
 libdir.chmod(libdir_stat.st_mode | stat.S_IWUSR)
 for lib in libs:
-    if not Path(lib).is_relative_to(formula_prefix):
+    # don't copy if it's there already. Unsure why it's showing up
+    if not Path(lib).is_relative_to(formula_prefix) \
+            and not os.path.isfile(libdir/os.path.basename(lib)):
         print(f'copying {lib} to {libdir}')
-        shutil.copy2(lib, libdir)
+        shutil.copy2(lib, libdir, follow_symlinks=True)
 
 binary_stat = binary.stat()
 binary.chmod(binary_stat.st_mode | stat.S_IWUSR)
@@ -98,7 +107,11 @@ def adjust_dylib_paths(binary, libs):
 
 adjust_dylib_paths(binary, libs)
 for lib in os.listdir(libdir):
-    adjust_dylib_paths(libdir/lib, libs)
+    # skip files/dirs like 'pkgconfig'
+    if not lib.endswith('.dylib'):
+        continue
+    adjust_dylib_paths(libdir/lib,
+                       set(libs).intersection(dependent_brew_libs(libdir/lib)))
 
 binary.chmod(binary_stat.st_mode)
 libdir.chmod(libdir_stat.st_mode)
