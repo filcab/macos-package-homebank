@@ -32,5 +32,5 @@ jobs:
       - name: Upload package
         uses: actions/upload-artifact@v2
         with:
-          name: macOS zip
+          name: Homebank
           path: Homebank.zip
