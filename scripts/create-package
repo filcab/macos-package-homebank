@@ -62,9 +62,8 @@ def collect_libs(binary):
     collected = set()
     while queued:
         binary = queued.pop()
-        libs = dependent_brew_libs(binary)
-        print(list(libs))
-        queued.extend(set(libs).difference(collected))
+        libs = set(dependent_brew_libs(binary))
+        queued.extend(libs.difference(collected))
         collected.update(libs)
 
     return sorted(list(collected))
@@ -96,13 +95,14 @@ binary.chmod(binary_stat.st_mode | stat.S_IWUSR)
 
 def adjust_dylib_paths(binary, libs):
     print(f'adjusting libs for {binary}')
-    for lib in libs:
-        cmd = ['install_name_tool',
-               '-change', lib,
-               f"@executable_path/../lib/{os.path.basename(lib)}",
-               binary]
-        print(cmd)
-        subprocess.run(cmd)
+
+    dep_libs = list(dependent_brew_libs(binary))
+    cmd = ['install_name_tool']
+    for lib in dep_libs:
+        cmd.extend(['-change', lib, f"@executable_path/../lib/{os.path.basename(lib)}"])
+    cmd.append(binary)
+
+    subprocess.run(cmd)
 
 
 adjust_dylib_paths(binary, libs)
