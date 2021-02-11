@@ -42,7 +42,7 @@ resources = appdir/'Resources'
 bindir = contents/'bin'
 libdir = contents/'lib'
 sharedir = contents/'share'
-icon_file = sharedir/'icons/hicolor/256x256/homebank.png'
+icon_file = sharedir/'icons/hicolor/256x256/apps/homebank.png'
 
 print(f'brew prefix: {brew_prefix}')
 print(f'formula: {args.formula}')
