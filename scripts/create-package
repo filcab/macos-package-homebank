@@ -58,9 +58,9 @@ def realpath_for_dir(path):
 def dependent_brew_libs(binary):
     lib_lines = subprocess.check_output(['otool', '-L', binary],
                                         encoding='utf-8').splitlines()[1:]
-    return map(
-        realpath_for_dir,
-        [line.strip().split()[0] for line in lib_lines if brew_prefix in line])
+    return [line.strip().split()[0]
+            for line in lib_lines
+            if brew_prefix in line]
 
 
 def collect_libs(binary):
