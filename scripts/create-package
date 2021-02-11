@@ -84,16 +84,17 @@ libs = collect_libs(binary)
 print('collected libs:')
 for lib in libs:
     print(f'  {lib}')
+
 # create the directory if it didn't exist
 os.makedirs(libdir, exist_ok=True)
 libdir_stat = libdir.stat()
 libdir.chmod(libdir_stat.st_mode | stat.S_IWUSR)
 for lib in libs:
-    # don't copy if it's there already. Unsure why it's showing up
-    if not Path(lib).is_relative_to(formula_prefix) \
+    # don't copy if it's already there
+    if not Path(lib).realpath().is_relative_to(formula_prefix) \
             and not os.path.isfile(libdir/os.path.basename(lib)):
         print(f'copying {lib} to {libdir}')
-        shutil.copy2(lib, libdir)
+        shutil.copy2(lib, libdir, follow_symlinks=True)
 
 binary_stat = binary.stat()
 binary.chmod(binary_stat.st_mode | stat.S_IWUSR)
