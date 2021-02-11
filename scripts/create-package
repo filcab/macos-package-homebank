@@ -57,8 +57,7 @@ def collect_libs(binary):
         lib_lines = subprocess.check_output(['otool', '-L', binary],
                                             encoding='utf-8').splitlines()[1:]
         libs = [line.strip().split()[0] for line in lib_lines if brew_prefix in line]
-        print(f'{binary} uses libs: {list(libs)}')
-        queued.extend(collected.difference(set(libs)))
+        queued.extend(set(libs).difference(collected))
         collected.update(libs)
 
     return sorted(list(collected))
