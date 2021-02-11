@@ -38,7 +38,7 @@ packaging_dir = Path(
 
 appdir = Path(args.appdir)
 contents = appdir/'Contents'
-resources = appdir/'Resources'
+resources = contents/'Resources'
 bindir = contents/'bin'
 libdir = contents/'lib'
 sharedir = contents/'share'
@@ -49,11 +49,17 @@ print(f'formula: {args.formula}')
 print(f'formula prefix: {formula_prefix}')
 
 
+# We want to keep the name of the libraries, but resolve the directories
+def realpath_for_dir(path):
+    p = os.path
+    return p.join(p.realpath(p.dirname(path)), p.basename(path))
+
+
 def dependent_brew_libs(binary):
     lib_lines = subprocess.check_output(['otool', '-L', binary],
                                         encoding='utf-8').splitlines()[1:]
     return map(
-        os.path.realpath,
+        realpath_for_dir,
         [line.strip().split()[0] for line in lib_lines if brew_prefix in line])
 
 
@@ -63,7 +69,7 @@ def collect_libs(binary):
     while queued:
         binary = queued.pop()
         libs = set(dependent_brew_libs(binary))
-        queued.extend(libs.difference(collected))
+        queued.extend(libs - collected)
         collected.update(libs)
 
     return sorted(list(collected))
@@ -87,31 +93,32 @@ for lib in libs:
     if not Path(lib).is_relative_to(formula_prefix) \
             and not os.path.isfile(libdir/os.path.basename(lib)):
         print(f'copying {lib} to {libdir}')
-        shutil.copy2(lib, libdir, follow_symlinks=True)
+        shutil.copy2(lib, libdir)
 
 binary_stat = binary.stat()
 binary.chmod(binary_stat.st_mode | stat.S_IWUSR)
 
 
-def adjust_dylib_paths(binary, libs):
+def adjust_dylib_paths(binary, libs, echo=False):
     print(f'adjusting libs for {binary}')
 
-    dep_libs = list(dependent_brew_libs(binary))
+    dep_libs = set(libs).intersection(dependent_brew_libs(binary))
     cmd = ['install_name_tool']
     for lib in dep_libs:
         cmd.extend(['-change', lib, f"@executable_path/../lib/{os.path.basename(lib)}"])
     cmd.append(binary)
 
+    if echo:
+        print(cmd)
     subprocess.run(cmd)
 
 
-adjust_dylib_paths(binary, libs)
+adjust_dylib_paths(binary, libs, echo=True)
 for lib in os.listdir(libdir):
     # skip files/dirs like 'pkgconfig'
     if not lib.endswith('.dylib'):
         continue
-    adjust_dylib_paths(libdir/lib,
-                       set(libs).intersection(dependent_brew_libs(libdir/lib)))
+    adjust_dylib_paths(libdir/lib, libs)
 
 binary.chmod(binary_stat.st_mode)
 libdir.chmod(libdir_stat.st_mode)
