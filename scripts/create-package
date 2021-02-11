@@ -91,7 +91,7 @@ libdir_stat = libdir.stat()
 libdir.chmod(libdir_stat.st_mode | stat.S_IWUSR)
 for lib in libs:
     # don't copy if it's already there
-    if not Path(lib).realpath().is_relative_to(formula_prefix) \
+    if not Path(os.path.realpath(lib)).is_relative_to(formula_prefix) \
             and not os.path.isfile(libdir/os.path.basename(lib)):
         print(f'copying {lib} to {libdir}')
         shutil.copy2(lib, libdir, follow_symlinks=True)
