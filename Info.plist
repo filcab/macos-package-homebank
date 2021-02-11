@@ -6,6 +6,6 @@
   <key>CFBundleExecutable</key>
   <string>bin/homebank</string>
   <key>CFBundleIconFile</key>
-  <string>share/icons/hicolor/256x256/homebank.png</string>
+  <string>homebank.png</string>
 </dict>
 </plist>

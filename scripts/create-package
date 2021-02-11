@@ -36,11 +36,13 @@ original_binary = Path(formula_prefix)/f'bin/{exe_name}'
 packaging_dir = Path(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-appdir = args.appdir
-contents = Path(appdir)/'Contents'
+appdir = Path(args.appdir)
+contents = appdir/'Contents'
+resources = appdir/'Resources'
 bindir = contents/'bin'
 libdir = contents/'lib'
 sharedir = contents/'share'
+icon_file = sharedir/'icons/hicolor/256x256/homebank.png'
 
 print(f'brew prefix: {brew_prefix}')
 print(f'formula: {args.formula}')
@@ -84,7 +86,6 @@ binary.chmod(binary_stat.st_mode | stat.S_IWUSR)
 
 def adjust_dylib_paths(binary, libs):
     print(f'adjusting libs for {binary}')
-    # subprocess.run(['install_name_tool', '-add_rpath', '@executable_path/../lib', binary])
     for lib in libs:
         cmd = ['install_name_tool',
                '-change', lib,
@@ -96,9 +97,11 @@ def adjust_dylib_paths(binary, libs):
 
 adjust_dylib_paths(binary, libs)
 for lib in os.listdir(libdir):
-    adjust_dylib_paths(lib, libs)
+    adjust_dylib_paths(libdir/lib, libs)
 
 binary.chmod(binary_stat.st_mode)
 libdir.chmod(libdir_stat.st_mode)
 
 shutil.copy2(packaging_dir/'Info.plist', contents)
+os.makedirs(resources)
+shutil.copy2(icon_file, resources)
