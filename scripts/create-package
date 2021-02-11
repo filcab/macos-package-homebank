@@ -80,11 +80,16 @@ for lib in libs:
 
 binary_stat = binary.stat()
 binary.chmod(binary_stat.st_mode | stat.S_IWUSR)
-# adjust dylib paths
-subprocess.run(['install_name_tool', '-add_rpath', '@loader_path/../lib', binary])
-for lib in libs:
-    subprocess.run(['install_name_tool', '-change', lib,
-                    f"@rpath/{os.path.basename(lib)}", binary])
+
+def adjust_dylib_paths(binary, libs):
+    # subprocess.run(['install_name_tool', '-add_rpath', '@executable_path/../lib', binary])
+    for lib in libs:
+        subprocess.run(['install_name_tool', '-change', lib,
+                        f"@executable_path/../lib/{os.path.basename(lib)}", binary])
+
+adjust_dylib_paths(binary, libs)
+for lib in os.listdir(libdir):
+    adjust_dylib_paths(lib, libs)
 
 binary.chmod(binary_stat.st_mode)
 libdir.chmod(libdir_stat.st_mode)
