@@ -39,6 +39,10 @@ bindir = contents/'bin'
 libdir = contents/'lib'
 sharedir = contents/'share'
 
+print(f'brew prefix: {brew_prefix}')
+print(f'formula: {args.formula}')
+print(f'formula prefix: {formula_prefix}')
+
 
 def collect_libs(binary):
     queued = [binary]
@@ -59,6 +63,9 @@ shutil.copytree(formula_prefix, contents, symlinks=True)
 
 binary = bindir/os.path.basename(original_binary)
 libs = collect_libs(binary)
+print('collected libs:')
+for lib in libs:
+    print(f'  {lib}')
 # create the directory if it didn't exist
 os.makedirs(libdir, exist_ok=True)
 libdir_stat = libdir.stat()
