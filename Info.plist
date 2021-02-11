@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- check more here: https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Introduction/Introduction.html#//apple_ref/doc/uid/TP40009247 -->
+  <key>CFBundleExecutable</key>
+  <string>bin/homebank</string>
+  <key>CFBundleIconFile</key>
+  <string>share/icons/hicolor/256x256/homebank.png</string>
+</dict>
+</plist>
