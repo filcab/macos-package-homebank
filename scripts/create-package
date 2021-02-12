@@ -58,9 +58,15 @@ def realpath_for_dir(path):
 def dependent_brew_libs(binary):
     lib_lines = subprocess.check_output(['otool', '-L', binary],
                                         encoding='utf-8').splitlines()[1:]
-    return [line.strip().split()[0]
-            for line in lib_lines
-            if brew_prefix in line]
+    binary_dir = os.path.dirname(binary)
+
+    def convert_loader_path(lib):
+        return lib.replace('@loader_path', binary_dir)
+
+    return map(convert_loader_path,
+               [line.strip().split()[0]
+                for line in lib_lines
+                if brew_prefix in line or '@loader_path' in line])
 
 
 def collect_libs(binary):
@@ -101,6 +107,9 @@ binary.chmod(binary_stat.st_mode | stat.S_IWUSR)
 
 
 def adjust_dylib_paths(binary, libs, echo=False):
+    # we don't need to adjust the '@loader_path' libraries, so we're not
+    # handling them especially (we don't have that string, we have the path to
+    # the libs)
     print(f'adjusting libs for {binary}')
 
     dep_libs = set(libs).intersection(dependent_brew_libs(binary))
