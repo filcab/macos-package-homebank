@@ -16,6 +16,8 @@ jobs:
           PATH: /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
         run: |
           echo PATH=$PATH
+          echo why is this failing?
+          'ps' '-ww' '-o' 'pid=' '-o' 'ppid=' '-o' 'args='
           export DEVROOT=$(pwd)/devroot
           export XDG_CONFIG_HOME=$DEVROOT/config
           export PIP_CONFIG_DIR=$XDG_CONFIG_HOME/pip
