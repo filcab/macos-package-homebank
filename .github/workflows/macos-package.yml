@@ -8,29 +8,50 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Install to homebrew
+      - name: Install pre-requisites for build
+        run: brew install bzr
+      
+      - name: Build GTK+
         run: |
-          brew install homebank
+          export DEVROOT=$(pwd)/devroot
+          export XDG_CONFIG_HOME=$DEVROOT/config
+          export PIP_CONFIG_DIR=$XDG_CONFIG_HOME/pip
 
-      - name: dump some information
-        run: |
-          brew ls -v homebank
-          brew --prefix homebank
-          ls $(brew --prefix homebank)
-          otool -L $(brew --prefix homebank)/bin/homebank
+          git clone https://gitlab.gnome.org/GNOME/gtk-osx
+          git clone https://gitlab.gnome.org/GNOME/gtk-mac-bundler
+          git clone https://gitlab.gnome.org//GNOME/gtk-mac-integration
+          
+          ./gtk-osx/gtk-osx-setup.sh
+          jhbuild bootstrap-gtk-osx
+          jhbuild build meta-gtk-osx-bootstrap meta-gtk-osx-gtk3
+          
 
-      - name: Checkout scripts
-        uses: actions/checkout@v2
-        with:
-          path: packaging
+      - name: Get source
+        run: bzr branch lp:homebank/5.5.x
+        
+      #- name: Install to homebrew
+      #  run: |
+      #    brew install homebank
 
-      - name: Package
-        run: |
-          ./packaging/scripts/create-package homebank HomeBank.app
-          zip -r Homebank Homebank.app
-         
-      - name: Upload package
-        uses: actions/upload-artifact@v2
-        with:
-          name: Homebank
-          path: Homebank.zip
+      #- name: dump some information
+      #  run: |
+      #    brew ls -v homebank
+      #    brew --prefix homebank
+      #    ls $(brew --prefix homebank)
+      #    otool -L $(brew --prefix homebank)/bin/homebank
+
+      #- name: Checkout scripts
+      #  uses: actions/checkout@v2
+      #  with:
+      #    path: packaging
+
+      #- name: Package
+      #  run: |
+      #    ./packaging/scripts/create-package homebank HomeBank.app
+      #    zip -r Homebank Homebank.app
+      #   
+      #- name: Upload package
+      #  uses: actions/upload-artifact@v2
+      #  with:
+      #    name: Homebank
+      #    path: Homebank.zip
