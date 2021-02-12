@@ -17,6 +17,7 @@ jobs:
         run: |
           echo PATH=$PATH
           echo why is this failing?
+          which ps
           'ps' '-ww' '-o' 'pid=' '-o' 'ppid=' '-o' 'args='
           export DEVROOT=$(pwd)/devroot
           export XDG_CONFIG_HOME=$DEVROOT/config
