@@ -12,6 +12,8 @@ jobs:
         run: brew install bzr
       
       - name: Build GTK+
+        env:
+          PATH: /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
         run: |
           echo PATH=$PATH
           export DEVROOT=$(pwd)/devroot
