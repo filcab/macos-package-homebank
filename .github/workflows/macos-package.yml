@@ -21,6 +21,7 @@ jobs:
           git clone https://gitlab.gnome.org/GNOME/gtk-mac-bundler
           git clone https://gitlab.gnome.org//GNOME/gtk-mac-integration
           
+          export PATH="$DEVROOT/.new_local/bin:$PATH"
           ./gtk-osx/gtk-osx-setup.sh
           jhbuild bootstrap-gtk-osx
           jhbuild build meta-gtk-osx-bootstrap meta-gtk-osx-gtk3
