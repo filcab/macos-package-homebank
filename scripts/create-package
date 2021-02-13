@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from glob import glob
 from pathlib import Path
 
 import argparse
@@ -41,6 +42,7 @@ contents = appdir/'Contents'
 resources = contents/'Resources'
 bindir = contents/'bin'
 libdir = contents/'lib'
+etcdir = contents/'etc'
 sharedir = contents/'share'
 icon_file = sharedir/'icons/hicolor/256x256/apps/homebank.png'
 
@@ -136,3 +138,47 @@ libdir.chmod(libdir_stat.st_mode)
 shutil.copy2(packaging_dir/'Info.plist', contents)
 os.makedirs(resources)
 shutil.copy2(icon_file, resources)
+
+
+def copy_gtk_extra(libdir, resources):
+    # Loosely following
+    # https://github.com/Beep6581/RawTherapee/blob/f7a3abc9a9c6762fab98ed1ccef674683d7e2ca8/tools/osx/macosx_bundle.sh
+    gdk_pixbuf_prefix = subprocess.check_output(
+        ['brew', '--prefix', 'gdk-pixbuf'], encoding='utf-8').strip()
+    for path in glob(f'{gdk_pixbuf_prefix}/*/loaders/*.so'):
+        shutil.copy2(path, libdir)
+
+    gtk_prefix = subprocess.check_output(
+        ['brew', '--prefix', 'gtk'], encoding='utf-8').strip()
+    for path in glob(f'{gtk_prefix}/*/immodules/*.{{dylib.so}}'):
+        shutil.copy2(path, libdir)
+
+    mac_theme_dir = f'{resources}/share/themes/Mac/gtk-3.0'
+    default_theme_dir = f'{resources}/share/themes/Default/gtk-3.0'
+    shutil.copy2(f'{brew_prefix}/share/themes/Mac/gtk-3.0/gtk-keys.css',
+                 mac_theme_dir)
+    shutil.copy2(f'{brew_prefix}/share/themes/Default/gtk-3.0/gtk-keys.css',
+                 default_theme_dir)
+
+    icons_dir = f'{brew_prefix}/share/icons'
+    os.makedirs(f'{resources}/share/icons')
+    shutil.copytree(f'{icons_dir}', f'{resources}/share/')
+    subprocess.run("gtk-update-icon-cache", f'{icons_dir}/Adwaita')
+    subprocess.run("gtk-update-icon-cache", f'{icons_dir}/hicolor')
+
+    shutil.copytree(f'{brew_prefix}/share/mime', f'{resources}/share/')
+    subprocess.run(['update-mime-database', '-V', '{resources}/share/mime'])
+
+    os.makedirs(f'{brew_prefix}/share/glib-2.0')
+    shutil.copytree(f'{brew_prefix}/share/glib-2.0/schemas',
+                    f'{resources}/share/glib-2.0')
+    subprocess.run(['glib-compile-schemas', '-V', '{resources}/share/glib-2.0/schemas'])
+
+    os.makedirs(f'{etcdir}/gtk-3.0')
+    with open(f'{etcdir}/gtk-3.0/gdk-pixbuf.loaders', 'w') as f:
+        subprocess.run(['gdk-pixbuf-query-loaders', f'{libdir}/libpix*.so'], stdout=f)
+    with open(f'{etcdir}/gtk-3.0/gtk.immodules', 'w') as f:
+        subprocess.run(['gtk-query-immodules-3.0', f'{libdir}/im-*'], stdout=f)
+
+
+copy_gtk_extra(libdir, resources)
