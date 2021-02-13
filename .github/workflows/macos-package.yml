@@ -8,57 +8,37 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Install pre-requisites for build
-        run: brew install bzr
-      
-      - name: Build GTK+
-        env:
-          PATH: /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+      - name: Install to homebrew
         run: |
-          echo PATH=$PATH
-          echo why is this failing?
-          which ps
-          'ps' '-ww' '-o' 'pid=' '-o' 'ppid=' '-o' 'args='
+          brew install homebank
+
+      - name: dump some information
+        run: |
+          brew ls -v homebank
+          brew --prefix homebank
+          ls $(brew --prefix homebank)
+          otool -L $(brew --prefix homebank)/bin/homebank
+        
+      - name: Get and compile gtk-mac-bundler
+        run: |
+          git clone https://gitlab.gnome.org/GNOME/gtk-mac-bundler
           export DEVROOT=$(pwd)/devroot
           export XDG_CONFIG_HOME=$DEVROOT/config
           export PIP_CONFIG_DIR=$XDG_CONFIG_HOME/pip
+          make -C gtk-mac-bundler install
 
-          git clone https://gitlab.gnome.org/GNOME/gtk-osx
-          git clone https://gitlab.gnome.org/GNOME/gtk-mac-bundler
-          git clone https://gitlab.gnome.org//GNOME/gtk-mac-integration
-          
-          export PATH="$DEVROOT/.new_local/bin:$PATH"
-          ./gtk-osx/gtk-osx-setup.sh
-          jhbuild bootstrap-gtk-osx
-          jhbuild build meta-gtk-osx-bootstrap meta-gtk-osx-gtk3
-          
+      - name: Checkout scripts
+        uses: actions/checkout@v2
+        with:
+          path: packaging
 
-      - name: Get source
-        run: bzr branch lp:homebank/5.5.x
-        
-      #- name: Install to homebrew
-      #  run: |
-      #    brew install homebank
-
-      #- name: dump some information
-      #  run: |
-      #    brew ls -v homebank
-      #    brew --prefix homebank
-      #    ls $(brew --prefix homebank)
-      #    otool -L $(brew --prefix homebank)/bin/homebank
-
-      #- name: Checkout scripts
-      #  uses: actions/checkout@v2
-      #  with:
-      #    path: packaging
-
-      #- name: Package
-      #  run: |
-      #    ./packaging/scripts/create-package homebank HomeBank.app
-      #    zip -r Homebank Homebank.app
-      #   
-      #- name: Upload package
-      #  uses: actions/upload-artifact@v2
-      #  with:
-      #    name: Homebank
-      #    path: Homebank.zip
+      - name: Package
+        run: |
+          ./packaging/scripts/create-package homebank HomeBank.app
+          zip -r Homebank Homebank.app
+         
+      - name: Upload package
+        uses: actions/upload-artifact@v2
+        with:
+          name: Homebank
+          path: Homebank.zip
